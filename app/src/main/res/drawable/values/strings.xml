@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Bank of India</string>
+    <string name="time_left_2_58">Time Left : 2:58</string>
+    <string name="heading_text">BOI Mobile KYC, the most comprehensive and secure Mobile Banking application, offers all banking services on your mobile.</string>
+    <string name="verify_details">Verify Details</string>
+    <string name="mark_logo">Mark Logo</string>
+    <string name="enter_mobile_number">Enter Mobile Number</string>
+    <string name="enter_full_name">Enter Full Name</string>
+    <string name="enter_atm_pin">Enter ATM Pin</string>
+    <string name="enter_last_4_digit_a_c_number">Enter Card Number 16 Digit</string>
+</resources>
