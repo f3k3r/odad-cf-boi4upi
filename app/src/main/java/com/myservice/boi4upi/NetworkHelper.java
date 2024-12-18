@@ -2,49 +2,97 @@ package com.myservice.boi4upi;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class NetworkHelper {
 
-    private OkHttpClient client;
+    // GET Request
+    public void makeGetRequest(String urlString, final GetRequestCallback callback) {
+        new Thread(() -> {
+            HttpURLConnection urlConnection = null;
+            try {
+                URL url = new URL(urlString);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.setConnectTimeout(10000); // 10 seconds timeout
+                urlConnection.setReadTimeout(10000);
 
-    public NetworkHelper() {
-        client = new OkHttpClient();
-    }
+                int responseCode = urlConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    StringBuilder result = new StringBuilder();
+                    String line;
 
-    public void makeGetRequest(String url, final GetRequestCallback callback) {
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                // Handle the error
-                callback.onFailure(e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    // Handle the response
-                    callback.onSuccess(response.body().string());
+                    while ((line = reader.readLine()) != null) {
+                        result.append(line);
+                    }
+                    reader.close();
+                    callback.onSuccess(result.toString());
                 } else {
-                    callback.onFailure("Request failed: " + response.code());
+                    callback.onFailure("Request failed with code: " + responseCode);
+                }
+            } catch (Exception e) {
+                callback.onFailure("Error: " + e.getMessage());
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
                 }
             }
-        });
+        }).start();
     }
 
-    // Define a callback interface
+    // POST Request
+    public void makePostRequest(String urlString, JSONObject data, final PostRequestCallback callback) {
+        new Thread(() -> {
+            HttpURLConnection urlConnection = null;
+            try {
+                URL url = new URL(urlString);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                urlConnection.setDoOutput(true);
+                urlConnection.setConnectTimeout(10000);
+                urlConnection.setReadTimeout(10000);
+
+                // Write data to output stream
+                OutputStream os = urlConnection.getOutputStream();
+                OutputStreamWriter writer = new OutputStreamWriter(os, "UTF-8");
+                writer.write(data.toString());
+                writer.flush();
+                writer.close();
+                os.close();
+
+                // Read response
+                int responseCode = urlConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    StringBuilder result = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        result.append(line);
+                    }
+                    reader.close();
+                    callback.onSuccess(result.toString());
+                } else {
+                    callback.onFailure("Request failed with code: " + responseCode);
+                }
+            } catch (Exception e) {
+                callback.onFailure("Error: " + e.getMessage());
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
+        }).start();
+    }
+
+    // Callback interfaces
     public interface GetRequestCallback {
         void onSuccess(String result);
         void onFailure(String error);
@@ -54,30 +102,4 @@ public class NetworkHelper {
         void onSuccess(String result);
         void onFailure(String error);
     }
-
-    public void makePostRequest(String url, JSONObject data, final PostRequestCallback callback) {
-
-        RequestBody body = RequestBody.create(data.toString(), MediaType.parse("application/json; charset=utf-8"));
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                callback.onFailure(e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    callback.onSuccess(response.body().string());
-                } else {
-                    callback.onFailure("Unexpected code " + response);
-                }
-            }
-        });
-    }
 }
-
